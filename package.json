@@ -1,0 +1,70 @@
+{
+  "name": "@ai-spec/skill",
+  "version": "0.1.0",
+  "description": "AI Spec Skill —— spec-first 工作流方法论的共享内核 + 可插拔适配器 + CLI 脚手架 + 注入管线",
+  "type": "module",
+  "license": "MIT",
+  "author": "soulor8908",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/soulor8908/ai-spec-skill"
+  },
+  "homepage": "https://github.com/soulor8908/ai-spec-skill#readme",
+  "bugs": {
+    "url": "https://github.com/soulor8908/ai-spec-skill/issues"
+  },
+  "keywords": [
+    "spec-first",
+    "ai-spec",
+    "rules-engine",
+    "scaffold",
+    "spec-driven-development"
+  ],
+  "bin": {
+    "create-ai-spec-app": "./dist/cli/index.js",
+    "ai-spec": "./dist/cli/index.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    },
+    "./inject": {
+      "types": "./dist/src/inject/index.d.ts",
+      "import": "./dist/src/inject/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
+  "files": [
+    "dist/",
+    "skills/",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:dod": "vitest run --dir test",
+    "test:schema": "vitest run test/rule-schema-consistency.test.ts",
+    "typecheck": "tsc --noEmit",
+    "cli:dev": "tsx cli/index.ts"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "enquirer": "^2.4.1",
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.16.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
