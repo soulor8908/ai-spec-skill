@@ -3,6 +3,20 @@
 // 导出规则引擎、规则加载器、SPI 类型、注入管线、三个契约 renderer。
 // 消费方（如 AIAdmin）通过 `import { RuleEngine, ... } from '@ai-spec/skill'` 使用。
 
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+/**
+ * 返回内置规则目录（包内 src/kernel/rules/ 绝对路径）。
+ * 消费方可用 `loadRules(getBuiltinRulesDir())` 加载 13 项声明式规则。
+ */
+export function getBuiltinRulesDir(): string {
+  // dist/src/index.js → dist/src/ → dist/ → package root → src/kernel/rules
+  return join(__dirname, '..', '..', 'src', 'kernel', 'rules');
+}
+
 // 规则引擎
 export { RuleEngine } from './engine/engine.js';
 export type { EngineOptions, EngineResult } from './engine/engine.js';
