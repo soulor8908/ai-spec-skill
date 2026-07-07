@@ -95,8 +95,8 @@ export function createMcpServer(): McpServer {
         safety_report: result.safety_report
           ? {
               new_failures: result.safety_report.new_failures,
-              baseline_passed: result.safety_report.baseline.passed,
-              after_passed: result.safety_report.after.passed,
+              baseline_exit_code: result.safety_report.baseline.exit_code,
+              after_exit_code: result.safety_report.after.exit_code,
             }
           : undefined,
       });

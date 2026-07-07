@@ -160,14 +160,15 @@ export class LocalStore implements AiSpecStore {
     for (const file of readdirSync(this.contractsDir)) {
       if (!file.endsWith('.meta.yaml') && !file.endsWith('.meta.yml')) continue;
       try {
-        const parsed = parseYaml(readFileSync(join(this.contractsDir, file), 'utf8')) as
-          | { schemas?: ContractSchemaMeta[] }
-          | ContractSchemaMeta;
+        const parsed = parseYaml(
+          readFileSync(join(this.contractsDir, file), 'utf8'),
+        ) as Record<string, unknown>;
         // 兼容两种格式：{ schemas: [...] } 或单个 schema 对象
-        if (Array.isArray(parsed.schemas)) {
-          contracts.push(...parsed.schemas);
-        } else if (parsed && typeof parsed === 'object' && 'name' in parsed) {
-          contracts.push(parsed as ContractSchemaMeta);
+        const schemas = parsed['schemas'];
+        if (Array.isArray(schemas)) {
+          contracts.push(...(schemas as ContractSchemaMeta[]));
+        } else if (parsed && typeof parsed === 'object' && typeof parsed['name'] === 'string') {
+          contracts.push(parsed as unknown as ContractSchemaMeta);
         }
       } catch (e) {
         console.error(`[store:${this.id}] 契约加载失败 ${file}：${(e as Error).message}`);
@@ -204,11 +205,11 @@ export class LocalStoreManager implements StoreManager {
 
 // ─── 序列化辅助 ───
 
-/** 把单条规则序列化为 YAML（不含 _source_file 内部字段） */
+/** 把单条规则序列化为 YAML（{ rules: [...] } 格式，与 loadRules 期望一致） */
 function serializeRule(rule: DeclarativeRule): string {
-  // 浅拷贝并剔除内部字段，保证序列化稳定
+  // 剔除内部字段，保证序列化稳定
   const { _source_file, ...rest } = rule;
-  return dumpYaml(rest, { sortKeys: false, lineWidth: 120 });
+  return dumpYaml({ rules: [rest] }, { sortKeys: false, lineWidth: 120 });
 }
 
 /** 把单个契约元模型序列化为 .meta.yaml 格式（{ schemas: [...] }） */
