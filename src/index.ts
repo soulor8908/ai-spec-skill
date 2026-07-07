@@ -127,3 +127,17 @@ export type {
 // ============ P2：ArtifactGraph 制品依赖图（也可经 @ai-spec/skill/graph 子路径导入） ============
 export { ArtifactGraph, defaultInjectPipelineGraph, getInjectBuildOrder } from './graph/index.js';
 export type { ArtifactNode, BlockedArtifacts, BuildPlan } from './graph/index.js';
+
+// ============ MCP Server（也可经 @ai-spec/skill/mcp 子路径导入） ============
+export { createMcpServer, startStdioMcpServer } from './mcp/index.js';
+export { toSpiProfile } from './mcp/index.js';
+
+// ============ Store 跨仓库协作（也可经 @ai-spec/skill/store 子路径导入） ============
+export { LocalStore, LocalStoreManager } from './store/index.js';
+export type {
+  AiSpecStore,
+  StoreConfig,
+  StoreManager,
+  StoreSnapshot,
+  SyncResult,
+} from './store/index.js';

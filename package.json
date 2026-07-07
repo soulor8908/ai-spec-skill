@@ -57,6 +57,14 @@
       "types": "./dist/src/graph/index.d.ts",
       "import": "./dist/src/graph/index.js"
     },
+    "./mcp": {
+      "types": "./dist/src/mcp/index.d.ts",
+      "import": "./dist/src/mcp/index.js"
+    },
+    "./store": {
+      "types": "./dist/src/store/index.d.ts",
+      "import": "./dist/src/store/index.js"
+    },
     "./package.json": "./package.json"
   },
   "main": "./dist/src/index.js",
@@ -66,6 +74,8 @@
     "src/adapters/",
     "src/delta/",
     "src/graph/",
+    "src/mcp/",
+    "src/store/",
     "dist/",
     "skills/",
     "README.md",
@@ -82,9 +92,11 @@
     "cli:dev": "tsx cli/index.ts"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "commander": "^12.1.0",
     "enquirer": "^2.4.1",
-    "js-yaml": "^4.1.0"
+    "js-yaml": "^4.1.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",

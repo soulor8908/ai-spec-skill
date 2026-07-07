@@ -17,6 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { registerInjectCommand } from './inject-command.js';
 import { registerSkillCommand } from './skill-command.js';
+import { registerMcpCommand } from './mcp-command.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -59,6 +60,9 @@ async function main(): Promise<void> {
 
   // Phase 3：注册 skill 子命令（list / search / add / update / remove）
   registerSkillCommand(program);
+
+  // MCP：注册 mcp 子命令（启动 stdio MCP Server）
+  registerMcpCommand(program);
 
   await program.parseAsync(process.argv);
 }
