@@ -6,6 +6,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { GenerateOptions } from '../options.js';
 import type { WriteOp } from '../../src/spi/adapter.js';
+import { getPackageRoot } from '../../src/paths.js';
 
 export const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -24,7 +25,8 @@ export function normalizePkgName(name: string): string {
  * 注意：本文件位于 cli/templates/，向上一级到 cli/，再向上一级到 skill/，再进入 adapters/。
  */
 export function loadAdapterFileOrThrow(type: string, id: string, fileName: string): string {
-  const path = join(__dirname, '..', '..', 'src', 'adapters', type, id, 'files', fileName);
+  // P1.11：基于包根解析，dev（cli/templates/）与 build（dist/cli/templates/）均正确
+  const path = join(getPackageRoot(), 'src', 'adapters', type, id, 'files', fileName);
   if (!existsSync(path)) {
     throw new Error(`适配器模板缺失：adapters/${type}/${id}/files/${fileName}（experimental 适配器防护，建议 1）`);
   }
@@ -38,7 +40,7 @@ export const loadAdapterFile = loadAdapterFileOrThrow;
  * 检查适配器文件是否存在（不抛错）。
  */
 export function adapterFileExists(type: string, id: string, fileName: string): boolean {
-  const path = join(__dirname, '..', '..', 'src', 'adapters', type, id, 'files', fileName);
+  const path = join(getPackageRoot(), 'src', 'adapters', type, id, 'files', fileName);
   return existsSync(path);
 }
 

@@ -29,9 +29,21 @@
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.js"
     },
+    "./engine": {
+      "types": "./dist/src/engine/index.d.ts",
+      "import": "./dist/src/engine/index.js"
+    },
     "./inject": {
       "types": "./dist/src/inject/index.d.ts",
       "import": "./dist/src/inject/index.js"
+    },
+    "./adapters": {
+      "types": "./dist/src/adapters/index.d.ts",
+      "import": "./dist/src/adapters/index.js"
+    },
+    "./intelligence": {
+      "types": "./dist/src/intelligence/index.d.ts",
+      "import": "./dist/src/intelligence/index.js"
     },
     "./package.json": "./package.json"
   },
@@ -39,6 +51,7 @@
   "types": "./dist/src/index.d.ts",
   "files": [
     "src/kernel/",
+    "src/adapters/",
     "dist/",
     "skills/",
     "README.md",
@@ -46,6 +59,7 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "prepare": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:dod": "vitest run --dir test",

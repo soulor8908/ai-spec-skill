@@ -17,6 +17,7 @@ import {
   loadRules,
   type DeclarativeRule,
 } from './loader.js';
+import { getBuiltinRulesDir } from '../paths.js';
 import type {
   RuleFinding,
   RuleCheckPlugin,
@@ -291,6 +292,6 @@ export class RuleEngine {
 }
 
 function defaultRulesDir(): string {
-  // 默认相对 process.cwd() 定位 kernel/rules
-  return join(process.cwd(), 'src', 'kernel', 'rules');
+  // P1.8：基于包根解析，不依赖 process.cwd()（消费方 node_modules 中无 src/kernel/rules）
+  return getBuiltinRulesDir();
 }

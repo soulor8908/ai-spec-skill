@@ -16,6 +16,8 @@ import { relative } from 'node:path';
 import type { RuleCheckPlugin, RuleCheckInput, RuleFinding } from '../spi/adapter.js';
 import type { DeclarativeRule } from './loader.js';
 import { extractMatches } from './glob.js';
+import { loadRules } from './loader.js';
+import { getBuiltinRulesDir } from '../paths.js';
 
 /**
  * 内置 regex 检查 plugin。
@@ -25,8 +27,10 @@ export class BuiltinRegexPlugin implements RuleCheckPlugin {
   readonly id = 'builtin-regex';
   private rulesById = new Map<string, DeclarativeRule>();
 
-  constructor(rules: DeclarativeRule[]) {
-    for (const r of rules) {
+  constructor(rules?: DeclarativeRule[]) {
+    // P1.6：无参时内部 auto-load 包内 kernel/rules（消费者无须先 loadRules）
+    const resolved = rules ?? loadRules(getBuiltinRulesDir()).rules;
+    for (const r of resolved) {
       // 仅接管 regex / structure 类、非 plugin_required 的规则
       if ((r.check.kind === 'regex' || r.check.kind === 'structure') && !r.check.plugin_required) {
         this.rulesById.set(r.id, r);

@@ -24,15 +24,19 @@ npm link
 import {
   RuleEngine,
   loadRules,
+  getBuiltinRulesDir,
   InjectPipeline,
-  BuiltinRegexPlugin,
   scoreSpec,
 } from '@ai-spec/skill';
 
-// 规则引擎
-const engine = new RuleEngine({ rulesDir: './.ai-spec/rules' });
-engine.registerPlugin(new BuiltinRegexPlugin());
-const result = await engine.run({ rootDir: process.cwd() });
+// 规则引擎（构造需 rootDir + profile；BuiltinRegexPlugin 由 engine 自动注册）
+const engine = new RuleEngine({
+  rootDir: process.cwd(),
+  profile: { language: 'typescript', overall_confidence: 1.0, signals: [] },
+  // rulesDir 缺省走 getBuiltinRulesDir()（包内 src/kernel/rules）
+});
+const result = await engine.run();
+if (result.exit_code !== 0) process.exit(1);
 
 // 注入管线（改造既有项目）
 const pipe = new InjectPipeline();
@@ -40,13 +44,17 @@ const report = await pipe.run({
   rootDir: '/path/to/existing/project',
   apply: true,           // 实际写入（默认 dry-run）
   skipSafetyNet: false,  // 跑测试安全网
+  onStage: (stage, status, detail) => console.log(`${stage}: ${status} ${detail ?? ''}`),
 });
 if (report.safety_report?.new_failures.length) {
   await pipe.rollback('/path/to/existing/project');
 }
 
-// 子路径导入（按需）
+// 子路径导入（按需加载，避免拉入无关代码）
+import { RuleEngine } from '@ai-spec/skill/engine';
 import { InjectPipeline } from '@ai-spec/skill/inject';
+import { renderZodContract } from '@ai-spec/skill/adapters';
+import { scoreSpec } from '@ai-spec/skill/intelligence';
 ```
 
 ### CLI 脚手架

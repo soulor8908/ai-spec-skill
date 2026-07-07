@@ -12,6 +12,7 @@ import { join } from 'node:path';
 import type { GenerateOptions } from '../options.js';
 import type { WriteOp } from '../../src/spi/adapter.js';
 import { __dirname, normalizePkgName, walkCopy } from './shared.js';
+import { getPackageRoot } from '../../src/paths.js';
 
 // ============ 1. 项目根文件 ============
 
@@ -216,7 +217,8 @@ function renderAiSpecConfig(opts: GenerateOptions): WriteOp {
 export function renderAiSpec(opts: GenerateOptions): WriteOp[] {
   const writes: WriteOp[] = [];
   // kernel 目录在 skill/kernel/，从 cli/templates/ 向上两层到 skill/
-  const kernelDir = join(__dirname, '..', '..', 'src', 'kernel');
+  // P1.11：基于包根解析，dev/build 模式均正确
+  const kernelDir = join(getPackageRoot(), 'src', 'kernel');
   if (!existsSync(kernelDir)) return writes;
 
   // 拷贝 kernel/rules、kernel/roles、kernel/templates、kernel/schema

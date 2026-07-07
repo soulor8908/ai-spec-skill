@@ -1,1 +1,0 @@
-{"version":3,"file":"web-scaffold.d.ts","sourceRoot":"","sources":["../../../cli/templates/web-scaffold.ts"],"names":[],"mappings":"AAOA,OAAO,KAAK,EAAE,eAAe,EAAE,MAAM,eAAe,CAAC;AACrD,OAAO,KAAK,EAAE,OAAO,EAAE,MAAM,0BAA0B,CAAC;AA0CxD,wBAAgB,aAAa,CAAC,IAAI,EAAE,eAAe,EAAE,QAAQ,EAAE,MAAM,EAAE,GAAG,OAAO,EAAE,CAgElF"}

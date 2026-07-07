@@ -1,14 +1,17 @@
 // src/inject/index.ts —— InjectPipeline 聚合类
 //
 // 把 detector → analyzer → reverser → injector → safety-net 五阶段串成可编程管线。
-// CLI（cli/inject-command.ts）与本类共享底层函数，差异仅在入口（CLI 做交互日志，
-// 本类做结构化返回）。
+// CLI（cli/inject-command.ts）通过 onStage 回调接入交互日志，不再重复编排逻辑（P1.5 DRY）。
 //
 // 用法：
 //   import { InjectPipeline } from '@ai-spec/skill';
 //   const pipe = new InjectPipeline();
-//   const result = await pipe.run({ rootDir: '/path/to/project', apply: true });
-//   if (result.safetyReport?.new_failures.length) { ... }
+//   const result = await pipe.run({
+//     rootDir: '/path/to/project',
+//     apply: true,
+//     onStage: (stage, status, detail) => console.log(`${stage} ${status} ${detail ?? ''}`),
+//   });
+//   if (result.safety_report?.new_failures.length) { ... }
 //   await pipe.rollback('/path/to/project');
 
 import { detectProject, detectAndWriteProfile } from './detector/detector.js';
@@ -27,6 +30,23 @@ import type { InjectionConfig, InjectionPlan, SeverityLevel } from './rule-injec
 import { captureBaseline, compareAfter, loadBaseline } from './safety-net/runner.js';
 import type { TestRunResult, SafetyNetReport } from './safety-net/runner.js';
 
+/** 注入管线阶段标识 */
+export type InjectStage =
+  | 'detect'
+  | 'analyze'
+  | 'reverse'
+  | 'safety-baseline'
+  | 'plan'
+  | 'execute'
+  | 'safety-after';
+
+/** 阶段回调（CLI 用于接入交互日志） */
+export type StageCallback = (
+  stage: InjectStage,
+  status: 'start' | 'done' | 'fail',
+  detail?: string,
+) => void;
+
 export interface InjectPipelineOptions {
   /** 项目根目录（绝对路径） */
   rootDir: string;
@@ -40,6 +60,8 @@ export interface InjectPipelineOptions {
   skipAnalyze?: boolean;
   /** 跳过 API 逆向 */
   skipReverse?: boolean;
+  /** 阶段进度回调（P1.5：CLI 接入交互日志，不重复编排逻辑） */
+  onStage?: StageCallback;
 }
 
 export interface InjectPipelineResult {
@@ -75,6 +97,7 @@ export interface RollbackResult {
  *
  * 串联五阶段：探测 → 架构分析 → API 逆向 → 注入计划/执行 → 安全网对比。
  * 每阶段可独立跳过，dry-run 模式只生成计划不写入。
+ * onStage 回调在阶段边界触发，供 CLI 接入日志（P1.5 DRY：编排逻辑唯一）。
  */
 export class InjectPipeline {
   /**
@@ -84,29 +107,54 @@ export class InjectPipeline {
     const rootDir = opts.rootDir;
     const apply = opts.apply ?? false;
     const severity = opts.severity ?? 'advisory';
+    const onStage = opts.onStage;
 
     // 1. 探测
+    onStage?.('detect', 'start');
     const { profile, written_to } = detectAndWriteProfile(rootDir);
+    onStage?.('detect', 'done', `${profile.language}${profile.language_version ? ' ' + profile.language_version : ''}`);
 
     // 2. 架构分析
     let architecture: ArchAnalysis | undefined;
     if (!opts.skipAnalyze) {
-      architecture = analyzeArchitecture(rootDir, profile);
+      onStage?.('analyze', 'start');
+      try {
+        architecture = analyzeArchitecture(rootDir, profile);
+        onStage?.('analyze', 'done', `${architecture.layers.length} 层, ${architecture.violations.length} 违规`);
+      } catch (e) {
+        onStage?.('analyze', 'fail', (e as Error).message);
+        throw e;
+      }
     }
 
     // 3. API 逆向
     let api_contract: ReverseResult | undefined;
     if (!opts.skipReverse) {
-      api_contract = reverseApi(rootDir, profile);
+      onStage?.('reverse', 'start');
+      try {
+        api_contract = reverseApi(rootDir, profile);
+        onStage?.('reverse', 'done', `${api_contract.endpoints.length} 端点`);
+      } catch (e) {
+        onStage?.('reverse', 'fail', (e as Error).message);
+        throw e;
+      }
     }
 
     // 4. 安全网 baseline（注入前，仅 apply 模式）
     let baseline: TestRunResult | undefined;
     if (!opts.skipSafetyNet && apply) {
-      baseline = loadBaseline(rootDir) ?? captureBaseline(rootDir, profile);
+      onStage?.('safety-baseline', 'start');
+      try {
+        baseline = loadBaseline(rootDir) ?? captureBaseline(rootDir, profile);
+        onStage?.('safety-baseline', 'done', `退出码 ${baseline.exit_code}, 失败 ${baseline.failed ?? 0}`);
+      } catch (e) {
+        onStage?.('safety-baseline', 'fail', (e as Error).message);
+        // baseline 失败不阻断，继续注入（CLI 旧行为兼容）
+      }
     }
 
     // 5. 注入计划
+    onStage?.('plan', 'start');
     const config: InjectionConfig = {
       out_dir: '.ai-spec',
       default_level: severity,
@@ -114,17 +162,26 @@ export class InjectPipeline {
       dry_run: !apply,
     };
     const plan = planInjection(rootDir, profile, config);
+    onStage?.('plan', 'done', `${plan.impact.new_files} 新建 + ${plan.impact.modified_files} 修改`);
 
     // 6. 执行（仅 apply 模式）
     let execution: { written: number; backups: string[] } | undefined;
     let safety_report: SafetyNetReport | undefined;
 
     if (apply) {
+      onStage?.('execute', 'start');
       execution = executeInjection(rootDir, plan);
+      onStage?.('execute', 'done', `${execution.written} 文件, ${execution.backups.length} 备份`);
 
       // 7. 安全网 after + 对比
       if (!opts.skipSafetyNet && baseline) {
-        safety_report = compareAfter(rootDir, profile, baseline);
+        onStage?.('safety-after', 'start');
+        try {
+          safety_report = compareAfter(rootDir, profile, baseline);
+          onStage?.('safety-after', 'done', `新增失败 ${safety_report.new_failures.length}`);
+        } catch (e) {
+          onStage?.('safety-after', 'fail', (e as Error).message);
+        }
       }
     }
 
@@ -154,22 +211,7 @@ export class InjectPipeline {
   }
 }
 
-// 透传底层函数，供高级用户直接调用
-export {
-  detectProject,
-  detectAndWriteProfile,
-  analyzeArchitecture,
-  reverseApi,
-  planInjection,
-  executeInjection,
-  rollbackInjection,
-  gateUp,
-  captureBaseline,
-  compareAfter,
-  loadBaseline,
-};
-
-// 透传类型
+// 类型透传（供消费者类型标注；底层函数不暴露公共 API，P0.4）
 export type {
   ProjectProfile,
   ArchAnalysis,

@@ -14,8 +14,10 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { load as parseYaml } from 'js-yaml';
 import { loadRules, type DeclarativeRule } from '../src/engine/loader.js';
+import { getBuiltinRulesDir } from '../src/paths.js';
 
-const RULES_DIR = join(process.cwd(), 'src', 'kernel', 'rules');
+// P1.9：基于包根解析，不依赖 process.cwd()（CI 工作目录可能不同）
+const RULES_DIR = getBuiltinRulesDir();
 
 function walkYaml(dir: string, acc: string[] = []): string[] {
   for (const name of readdirSync(dir)) {

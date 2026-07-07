@@ -1,5 +1,5 @@
 node_modules/
-# dist/ (committed for GitHub-installed consumers)
+dist/
 build/
 *.log
 .env
