@@ -29,6 +29,12 @@ import {
 import type { InjectionConfig, InjectionPlan, SeverityLevel } from './rule-injector/types.js';
 import { captureBaseline, compareAfter, loadBaseline } from './safety-net/runner.js';
 import type { TestRunResult, SafetyNetReport } from './safety-net/runner.js';
+import {
+  ArtifactGraph,
+  defaultInjectPipelineGraph,
+  getInjectBuildOrder,
+} from '../graph/index.js';
+import type { InjectPipelineStage } from '../graph/defaults.js';
 
 /** 注入管线阶段标识 */
 export type InjectStage =
@@ -208,6 +214,23 @@ export class InjectPipeline {
    */
   gateUp(rootDir: string, ruleId: string, level: SeverityLevel): GateUpResult {
     return gateUp(rootDir, ruleId, level);
+  }
+
+  /**
+   * 返回本管线的制品依赖图（P2）。
+   * 节点 = 阶段；边 = 阶段间依赖。可用于查询就绪/阻塞阶段，
+   * 取代硬编码线性流程。
+   */
+  getArtifactGraph(): ArtifactGraph {
+    return new ArtifactGraph(defaultInjectPipelineGraph());
+  }
+
+  /**
+   * 返回拓扑构建顺序（依赖在前）。
+   * 默认顺序：detect → analyze/reverse（可并行）→ safety-baseline → plan → execute → safety-after。
+   */
+  getBuildOrder(): InjectPipelineStage[] {
+    return getInjectBuildOrder();
   }
 }
 

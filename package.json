@@ -45,6 +45,18 @@
       "types": "./dist/src/intelligence/index.d.ts",
       "import": "./dist/src/intelligence/index.js"
     },
+    "./ai-tool": {
+      "types": "./dist/src/adapters/ai-tool/index.d.ts",
+      "import": "./dist/src/adapters/ai-tool/index.js"
+    },
+    "./delta": {
+      "types": "./dist/src/delta/index.d.ts",
+      "import": "./dist/src/delta/index.js"
+    },
+    "./graph": {
+      "types": "./dist/src/graph/index.d.ts",
+      "import": "./dist/src/graph/index.js"
+    },
     "./package.json": "./package.json"
   },
   "main": "./dist/src/index.js",
@@ -52,6 +64,8 @@
   "files": [
     "src/kernel/",
     "src/adapters/",
+    "src/delta/",
+    "src/graph/",
     "dist/",
     "skills/",
     "README.md",
